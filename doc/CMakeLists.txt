@@ -35,6 +35,7 @@ if(BUILD_DOCS AND DOXYGEN_FOUND)
   # not documented modules list
   list(APPEND blacklist "ts" "java" "python2" "python3" "world" "contrib_world")
   unset(CMAKE_DOXYGEN_TUTORIAL_CONTRIB_ROOT)
+  unset(CMAKE_DOXYGEN_EXTRA_DOCS)
 
   # gathering headers
   set(paths_include)
@@ -60,7 +61,22 @@ if(BUILD_DOCS AND DOXYGEN_FOUND)
       if(EXISTS "${docs_dir}")
         list(APPEND paths_doc "${docs_dir}")
         list(APPEND deps ${docs_dir})
-      endif()
+
+		# extra markdown reference entry
+        file(GLOB extra_docs RELATIVE "${OPENCV_MODULE_opencv_${m}_LOCATION}" "${docs_dir}/*.markdown")
+        foreach (d ${extra_docs})
+          if (NOT DEFINED CMAKE_DOXYGEN_EXTRA_DOCS)
+            set(CMAKE_DOXYGEN_EXTRA_DOCS "- @ref extra_docs_root")
+            set(extra_docs_root "${CMAKE_CURRENT_BINARY_DIR}/extra_docs_root.markdown")
+            file(WRITE "${extra_docs_root}"
+              "Additional documentation and related pages {#extra_docs_root}\n"
+              "=============================\n")
+          endif()
+          file(STRINGS "${OPENCV_MODULE_opencv_${m}_LOCATION}/${d}" extra_doc_id LIMIT_COUNT 1 REGEX ".*{#[^}]+}")
+          string(REGEX REPLACE ".*{#([^}]+)}" "\\1" extra_doc_id "${extra_doc_id}")
+          file(APPEND "${extra_docs_root}" "- ${m}. @subpage ${extra_doc_id}\n")
+        endforeach()
+	  endif()
       # sample folder
       set(sample_dir "${OPENCV_MODULE_opencv_${m}_LOCATION}/samples")
       if(EXISTS "${sample_dir}")
@@ -132,12 +148,14 @@ if(BUILD_DOCS AND DOXYGEN_FOUND)
   set(rootfile "${CMAKE_CURRENT_BINARY_DIR}/root.markdown")
   set(bibfile "${CMAKE_CURRENT_SOURCE_DIR}/opencv.bib")
   set(faqfile "${CMAKE_CURRENT_SOURCE_DIR}/faq.markdown")
-  set(tutorial_path "${CMAKE_CURRENT_SOURCE_DIR}/tutorials")
-  set(tutorial_py_path "${CMAKE_CURRENT_SOURCE_DIR}/py_tutorials")
+  set(tutorials_path "${CMAKE_CURRENT_SOURCE_DIR}/tutorials")
+  set(tutorial_cpp_path "${tutorials_path}/cpp_tutorials")
+  set(tutorial_py_path "${tutorials_path}/py_tutorials")
+  set(tutorials_index "${CMAKE_CURRENT_BINARY_DIR}/tutorials_index.markdown")
   set(example_path "${CMAKE_SOURCE_DIR}/samples")
 
   # set export variables
-  string(REPLACE ";" " \\\n" CMAKE_DOXYGEN_INPUT_LIST "${rootfile} ; ${faqfile} ; ${paths_include} ; ${paths_hal_interface} ; ${paths_doc} ; ${tutorial_path} ; ${tutorial_py_path} ; ${paths_tutorial} ; ${tutorial_contrib_root}")
+  string(REPLACE ";" " \\\n" CMAKE_DOXYGEN_INPUT_LIST "${rootfile} ; ${faqfile} ; ${paths_include} ; ${paths_hal_interface} ; ${paths_doc} ; ${tutorials_path} ; ${tutorial_py_path} ; ${paths_tutorial} ; ${tutorial_contrib_root} ; ${tutorials_index} ; ${extra_docs_root}")
   string(REPLACE ";" " \\\n" CMAKE_DOXYGEN_IMAGE_PATH "${paths_doc} ; ${tutorial_path} ; ${tutorial_py_path} ; ${paths_tutorial}")
   # TODO: remove paths_doc from EXAMPLE_PATH after face module tutorials/samples moved to separate folders
   string(REPLACE ";" " \\\n" CMAKE_DOXYGEN_EXAMPLE_PATH  "${example_path} ; ${paths_doc} ; ${paths_sample}")
@@ -168,6 +186,8 @@ if(BUILD_DOCS AND DOXYGEN_FOUND)
   # writing file
   configure_file(Doxyfile.in ${doxyfile} @ONLY)
   configure_file(root.markdown.in ${rootfile} @ONLY)
+  configure_file(${tutorials_path}/tutorials_index.markdown.in ${tutorials_index} @ONLY)
+
 
   add_custom_target(doxygen
     COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}

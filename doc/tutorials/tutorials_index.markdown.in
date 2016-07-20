@@ -1,0 +1,6 @@
+OpenCV Tutorials {#tutorials_index}
+================
+
+- @ref tutorial_root
+- @ref tutorial_py_root
+@CMAKE_DOXYGEN_TUTORIAL_CONTRIB_ROOT@

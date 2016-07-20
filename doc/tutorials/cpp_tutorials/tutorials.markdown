@@ -1,4 +1,4 @@
-OpenCV Tutorials {#tutorial_root}
+OpenCV C++ Tutorials {#tutorial_root}
 ================
 
 The following links describe a set of basic OpenCV tutorials. All the source code mentioned here is

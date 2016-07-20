@@ -1,4 +1,4 @@
-Introduction {#intro}
+Introduction to OpenCV {#intro}
 ============
 
 OpenCV (Open Source Computer Vision Library: <http://opencv.org>) is an open-source BSD-licensed
