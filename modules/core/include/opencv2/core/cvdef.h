@@ -42,8 +42,8 @@
 //
 //M*/
 
-#ifndef __OPENCV_CORE_CVDEF_H__
-#define __OPENCV_CORE_CVDEF_H__
+#ifndef OPENCV_CORE_CVDEF_H
+#define OPENCV_CORE_CVDEF_H
 
 //! @addtogroup core_utils
 //! @{
@@ -193,10 +193,6 @@ enum CpuFeatures {
 #    endif
 #    define CV_POPCNT 1
 #  endif
-#  if defined __F16C__ || (defined _MSC_VER && _MSC_VER >= 1700)
-#    include <immintrin.h>
-#    define CV_FP16 1
-#  endif
 #  if defined __AVX__ || (defined _MSC_VER && _MSC_VER >= 1600 && 0)
 // MS Visual Studio 2010 (2012?) has no macro pre-defined to identify the use of /arch:AVX
 // See: http://connect.microsoft.com/VisualStudio/feedback/details/605858/arch-avx-should-define-a-predefined-macro-in-x64-and-set-a-unique-value-for-m-ix86-fp-in-win32
@@ -219,16 +215,12 @@ enum CpuFeatures {
 
 #if (defined WIN32 || defined _WIN32) && defined(_M_ARM)
 # include <Intrin.h>
-# include "arm_neon.h"
+# include <arm_neon.h>
 # define CV_NEON 1
 # define CPU_HAS_NEON_FEATURE (true)
 #elif defined(__ARM_NEON__) || (defined (__ARM_NEON) && defined(__aarch64__))
 #  include <arm_neon.h>
 #  define CV_NEON 1
-#endif
-
-#if defined __GNUC__ && ((defined (__arm__) && (__ARM_FP & 0x2)) || defined(__aarch64__))
-#    define CV_FP16 1
 #endif
 
 #if defined __GNUC__ && defined __arm__ && (defined __ARM_PCS_VFP || defined __ARM_VFPV3__ || defined __ARM_NEON__) && !defined __SOFTFP__
@@ -260,9 +252,6 @@ enum CpuFeatures {
 #endif
 #ifndef CV_SSE4_2
 #  define CV_SSE4_2 0
-#endif
-#ifndef CV_FP16
-#  define CV_FP16 0
 #endif
 #ifndef CV_AVX
 #  define CV_AVX 0
@@ -314,11 +303,39 @@ enum CpuFeatures {
 #define CV_2PI 6.283185307179586476925286766559
 #define CV_LOG2 0.69314718055994530941723212145818
 
+#if defined __ARM_FP16_FORMAT_IEEE \
+    && !defined __CUDACC__
+#  define CV_FP16_TYPE 1
+#else
+#  define CV_FP16_TYPE 0
+#endif
+
+typedef union Cv16suf
+{
+    short i;
+#if CV_FP16_TYPE
+    __fp16 h;
+#endif
+    struct _fp16Format
+    {
+        unsigned int significand : 10;
+        unsigned int exponent    : 5;
+        unsigned int sign        : 1;
+    } fmt;
+}
+Cv16suf;
+
 typedef union Cv32suf
 {
     int i;
     unsigned u;
     float f;
+    struct _fp32Format
+    {
+        unsigned int significand : 23;
+        unsigned int exponent    : 8;
+        unsigned int sign        : 1;
+    } fmt;
 }
 Cv32suf;
 
@@ -401,9 +418,8 @@ Cv64suf;
 *          exchange-add operation for atomic operations on reference counters            *
 \****************************************************************************************/
 
-#if defined __INTEL_COMPILER && !(defined WIN32 || defined _WIN32)
-   // atomic increment on the linux version of the Intel(tm) compiler
-#  define CV_XADD(addr, delta) (int)_InterlockedExchangeAdd(const_cast<void*>(reinterpret_cast<volatile void*>(addr)), delta)
+#ifdef CV_XADD
+  // allow to use user-defined macro
 #elif defined __GNUC__
 #  if defined __clang__ && __clang_major__ >= 3 && !defined __ANDROID__ && !defined __EMSCRIPTEN__ && !defined(__CUDACC__)
 #    ifdef __ATOMIC_ACQ_REL
@@ -462,4 +478,4 @@ Cv64suf;
 
 //! @}
 
-#endif // __OPENCV_CORE_CVDEF_H__
+#endif // OPENCV_CORE_CVDEF_H

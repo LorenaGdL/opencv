@@ -16,6 +16,7 @@ Required Packages
 -   [optional] libtbb2 libtbb-dev
 -   [optional] libdc1394 2.x
 -   [optional] libjpeg-dev, libpng-dev, libtiff-dev, libjasper-dev, libdc1394-22-dev
+-   [optional] CUDA Toolkit 6.5 or higher
 
 The packages can be installed using a terminal and the following commands or by using Synaptic
 Manager:
@@ -72,6 +73,9 @@ Building OpenCV from Source Using CMake
     -   set optional parameters
     -   run: “Configure”
     -   run: “Generate”
+
+    @note
+    Use `cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..` , without spaces after -D if the above example doesn't work.
 
 -#  Description of some parameters
     -   build type: `CMAKE_BUILD_TYPE=Release\Debug`
